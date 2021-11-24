@@ -34,7 +34,7 @@ public class TramiteServiceImpl implements TramiteService {
     @Override
     public void procesar(Tramite tramite) {
         try {
-            if (ESTADO_RADICADO.equals(tramite.getEstado())) {
+            if (ESTADO_RADICADO.equalsIgnoreCase(tramite.getEstado())) {
                 LOG.info("Procesando tramite con ID {}", tramite.getId());
                 Thread.sleep(SLEEP);
                 int rand = getRandomNumberInRange(MIN_RANDOM, MAX_RANDOM);
@@ -49,21 +49,19 @@ public class TramiteServiceImpl implements TramiteService {
                     metricsPort.incrementCounter(MetricsPort.TRAMITES_DESAPROBADOS);
                     LOG.info("Tramite con ID {} desaprobado", tramite.getId());
                 }
-            } else if (ESTADO_GENERADO.equals(tramite.getEstado())) {
-                Notificacion notificacion = new Notificacion();
-                notificacion.setTemplate("tramite-generado");
-                if (tramite.getCreador() != null) {
-                    notificacion.setTo(tramite.getCreador().getEmail());
-                    Map<String, String> vars = new HashMap<>();
-                    String name = tramite.getCreador().getName() != null ? tramite.getCreador().getName() : "";
-                    String lastName = tramite.getCreador().getLastName() != null
-                            ? tramite.getCreador().getLastName() : "";
-                    vars.put("nombre", name + " " + lastName);
-                    vars.put("tramiteId", tramite.getId());
-                    notificacion.setVars(vars);
+            } else if (ESTADO_APROBADO_GENERADO.equalsIgnoreCase(tramite.getEstado())) {
+                Notificacion notificacion = getNotificacion(tramite);
+                if (notificacion != null) {
                     notificacionPort.send(notificacion);
-                    metricsPort.incrementCounter(MetricsPort.TRAMITES_GENERADOS);
-                    LOG.info("Se envia notificacion de tramite generado al tramite con ID {}", tramite.getId());
+                    metricsPort.incrementCounter(MetricsPort.TRAMITES_APROBADOS_GENERADOS);
+                    LOG.info("Se envia notificacion de resolucion de tramite aprobado con ID {}", tramite.getId());
+                }
+            } else if (ESTADO_DESAPROBADO_GENERADO.equalsIgnoreCase(tramite.getEstado())) {
+                Notificacion notificacion = getNotificacion(tramite);
+                if (notificacion != null) {
+                    notificacionPort.send(notificacion);
+                    metricsPort.incrementCounter(MetricsPort.TRAMITES_DESAPROBADOS_GENERADOS);
+                    LOG.info("Se envia notificacion de resolucion de tramite desaprobado con ID {}", tramite.getId());
                 }
             } else {
                 LOG.info("Mensaje de tramite con ID {} descartado por tener estado {}",
@@ -80,5 +78,32 @@ public class TramiteServiceImpl implements TramiteService {
         }
         Random r = new Random();
         return r.nextInt((max - min) + 1) + min;
+    }
+
+    private Notificacion getNotificacion(Tramite tramite) {
+        if (tramite.getCreador() != null) {
+            Notificacion notificacion = new Notificacion();
+            if (ESTADO_APROBADO_GENERADO.equalsIgnoreCase(tramite.getEstado())) {
+                notificacion.setTemplate("tramite-aprobado-generado");
+            } else if (ESTADO_DESAPROBADO_GENERADO.equalsIgnoreCase(tramite.getEstado())) {
+                notificacion.setTemplate("tramite-desaprobado-generado");
+            } else {
+               LOG.warn("No se puede crear notificacion para el tramite con id {}, estado invalido {} ",
+                       tramite.getId(), tramite.getEstado());
+               return null;
+            }
+            notificacion.setTo(tramite.getCreador().getEmail());
+            Map<String, String> vars = new HashMap<>();
+            String name = tramite.getCreador().getName() != null ? tramite.getCreador().getName() : "";
+            String lastName = tramite.getCreador().getLastName() != null
+                    ? tramite.getCreador().getLastName() : "";
+            vars.put("nombre", name + " " + lastName);
+            vars.put("tramiteId", tramite.getId());
+            notificacion.setVars(vars);
+            return notificacion;
+        } else {
+            LOG.warn("El tramite con id {} no tiene creador", tramite.getId());
+            return null;
+        }
     }
 }
