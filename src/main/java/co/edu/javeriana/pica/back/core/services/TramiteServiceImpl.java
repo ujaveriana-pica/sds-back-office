@@ -62,6 +62,7 @@ public class TramiteServiceImpl implements TramiteService {
                     vars.put("tramiteId", tramite.getId());
                     notificacion.setVars(vars);
                     notificacionPort.send(notificacion);
+                    metricsPort.incrementCounter(MetricsPort.TRAMITES_GENERADOS);
                     LOG.info("Se envia notificacion de tramite generado al tramite con ID {}", tramite.getId());
                 }
             } else {
