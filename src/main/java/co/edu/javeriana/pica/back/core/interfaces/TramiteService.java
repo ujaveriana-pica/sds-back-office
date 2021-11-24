@@ -7,7 +7,8 @@ public interface TramiteService {
     String ESTADO_RADICADO = "radicado";
     String ESTADO_APROBADO = "aprobado";
     String ESTADO_DESAPROBADO = "desaprobado";
-    String ESTADO_GENERADO = "generado";
+    String ESTADO_APROBADO_GENERADO = "aprobado-generado";
+    String ESTADO_DESAPROBADO_GENERADO = "desaprobado-generado";
 
     void procesar(Tramite tramite);
 }
