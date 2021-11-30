@@ -23,7 +23,7 @@ public class TramiteServiceImpl implements TramiteService {
     private static final int MIN_RANDOM = 0;
     private static final int MAX_RANDOM = 10;
     private static final int MAX_PERCENTAGE = 7;
-    private static final int SLEEP = 30 * 1000;
+    private static final int SLEEP = 5 * 1000;
 
     public TramiteServiceImpl(MetricsPort metricsPort, TramiteProducerPort tramiteProducerPort,
                               NotificacionPort notificacionPort) {
